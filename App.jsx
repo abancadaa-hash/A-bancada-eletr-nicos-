@@ -957,3 +957,4 @@ export default function Bancada() {
       </footer>
     </div>
   );
+}
