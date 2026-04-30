@@ -512,20 +512,6 @@ function AdminPanel({ products, onSave, onClose }) {
   };
   const f = (k, v) => setForm(prev => ({...prev, [k]: v}));
 
-  const handleCoverUpload = async (e) => {
-    const file = e.target.files[0]; if (!file) return;
-    const url = await fileToDataUrl(file);
-    f("cover", url);
-  };
-
-  const handleGalleryUpload = async (e) => {
-    const files = Array.from(e.target.files);
-    const urls = await Promise.all(files.map(fileToDataUrl));
-    f("gallery", [...(form.gallery||[]), ...urls].slice(0, 8));
-  };
-
-  const removeGalleryImg = (i) => f("gallery", form.gallery.filter((_, idx) => idx !== i));
-
   const handleSubmit = () => {
     if (!form.name || !form.price) return alert("Nome e preço são obrigatórios.");
     if (editing) {
@@ -583,31 +569,52 @@ function AdminPanel({ products, onSave, onClose }) {
 
           <div style={{marginBottom:20}}>
             <div className="sec-divider">Imagem de capa</div>
-            <label className="img-upload-area">
-              <input type="file" accept="image/*" onChange={handleCoverUpload} />
-              {form.cover
-                ? <img src={form.cover} alt="capa" style={{width:120,height:120,objectFit:"cover",borderRadius:10}} />
-                : <><div style={{fontSize:"2rem"}}>📷</div><span className="img-upload-label">Clica para adicionar foto de capa</span></>}
-            </label>
+            <div style={{background:"var(--bg2)",border:"1.5px solid var(--border)",borderRadius:10,padding:16}}>
+              <div style={{fontSize:"0.72rem",fontWeight:700,color:"var(--txt2)",letterSpacing:".06em",textTransform:"uppercase",marginBottom:8}}>Link do Cloudinary (foto de capa)</div>
+              <input
+                className="form-input"
+                placeholder="https://res.cloudinary.com/dl4g8okvj/image/upload/..."
+                value={form.cover||""}
+                onChange={e => f("cover", e.target.value)}
+                style={{width:"100%",marginBottom:10}}
+              />
+              {form.cover ? (
+                <div style={{display:"flex",alignItems:"center",gap:10}}>
+                  <img src={form.cover} alt="capa" style={{width:80,height:80,objectFit:"cover",borderRadius:8,border:"1.5px solid var(--border)"}} onError={e => e.target.style.display="none"} />
+                  <button onClick={() => f("cover","")} style={{background:"#fff5f5",border:"1.5px solid #fecaca",color:"#ef4444",borderRadius:8,padding:"6px 12px",fontSize:"0.75rem",cursor:"pointer"}}>Remover</button>
+                </div>
+              ) : (
+                <div style={{fontSize:"0.78rem",color:"var(--txt3)",fontWeight:300}}>💡 Faz upload no Cloudinary → copia o link → cola aqui</div>
+              )}
+            </div>
           </div>
 
           <div style={{marginBottom:20}}>
             <div className="sec-divider">Galeria de imagens (até 8)</div>
-            <label className="img-upload-area">
-              <input type="file" accept="image/*" multiple onChange={handleGalleryUpload} />
-              <div style={{fontSize:"2rem"}}>🖼️</div>
-              <span className="img-upload-label">Clica para adicionar fotos à galeria</span>
-            </label>
-            {form.gallery && form.gallery.length > 0 && (
-              <div className="img-previews" style={{marginTop:10}}>
-                {form.gallery.map((img, i) => (
-                  <div key={i} className="img-preview-wrap">
-                    <img src={img} alt="" className="img-preview" />
-                    <button className="img-preview-del" onClick={() => removeGalleryImg(i)}>✕</button>
-                  </div>
-                ))}
-              </div>
-            )}
+            <div style={{background:"var(--bg2)",border:"1.5px solid var(--border)",borderRadius:10,padding:16}}>
+              <div style={{fontSize:"0.72rem",fontWeight:700,color:"var(--txt2)",letterSpacing:".06em",textTransform:"uppercase",marginBottom:8}}>Links das fotos da galeria</div>
+              {[0,1,2,3,4,5,6,7].map(i => (
+                <div key={i} style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
+                  <div style={{fontSize:"0.75rem",color:"var(--txt3)",width:20,flexShrink:0,fontWeight:600}}>#{i+1}</div>
+                  <input
+                    className="form-input"
+                    placeholder={`Link da foto ${i+1}...`}
+                    value={(form.gallery&&form.gallery[i])||""}
+                    onChange={e => {
+                      const g = [...(form.gallery||[])];
+                      while(g.length <= i) g.push("");
+                      g[i] = e.target.value;
+                      f("gallery", g.filter((v,idx) => idx <= i || v));
+                    }}
+                    style={{flex:1,fontSize:"0.78rem"}}
+                  />
+                  {form.gallery&&form.gallery[i] && (
+                    <img src={form.gallery[i]} alt="" style={{width:36,height:36,objectFit:"cover",borderRadius:6,flexShrink:0}} onError={e => e.target.style.display="none"} />
+                  )}
+                </div>
+              ))}
+              <div style={{fontSize:"0.75rem",color:"var(--txt3)",fontWeight:300,marginTop:4}}>💡 Para cada foto: upload no Cloudinary → copia o link → cola no campo</div>
+            </div>
           </div>
 
           <div className="form-grid">
@@ -950,4 +957,3 @@ export default function Bancada() {
       </footer>
     </div>
   );
-}
